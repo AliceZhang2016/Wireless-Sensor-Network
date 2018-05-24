@@ -50,7 +50,7 @@ class MsgHandler():
 		return Network
 
 
-	def Encode_CH_Change_Msg(address):
+	def Encode_CH_Change_Msg(self,address):
 		msg='CH_change;'+address+';'
 		#ex: CH_chagne;127.0.0.1;
 		return msg
@@ -65,18 +65,20 @@ class MsgHandler():
 		pass
 
 	def Decode(self,msg):
+		type_msg=0
 		Info_array=msg.split(';')
 		if Info_array[0]=='CH_chagne':
-			Decode_CH_Change_Msg(msg)
+			type_msg=1
 		elif Info_array[0]=='List_Info':
-			Decode_List_Info_Msg(msg)
+			type_msg=2
 		elif Info_array[0]=='Info':
-			Decode_Info_Msg(msg)
+			type_msg=3
 		else:
-			print 'Error in decode the message received.'
+			type_msg=0
+		return type_msg
 
 
-'''TEST'''
+'''TEST
 Msg_Handler=MsgHandler()
 address='192.168.0.1'
 energy_level=88
@@ -97,7 +99,7 @@ address,energy_level,coor=Msg_Handler.Decode_Info_Msg(Msg)
 Msg=Msg_Handler.Encode_List_Info_Msg(Network)
 print(Msg)
 tmp=Msg_Handler.Decode_List_Info_Msg(Msg)
-print(tmp)
+print(tmp)'''
 
 
 
