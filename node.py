@@ -48,6 +48,17 @@ class Node():
 			
     
     def send(self, addr_des, port_des, msg):
+        code=0
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        addr = (addr_des, port_des)
+        try:
+            s.sendto(msg, addr)
+            print msg
+        except:
+            code=1
+        finally:
+            #time.sleep(3)
+            sock.close()
         # send msg from addr_source to addr_des
         
         # return action status code:
@@ -56,6 +67,14 @@ class Node():
         return code
     
     def receive(self,addr_source, port_source, msg):
+        code=0
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((addr_source, port_source))
+        while True:                                          
+            data, addr = s.recvfrom(1024)
+            print data
+            print addr
+            #analyze data
         # connect to the speicified address and port
         # receive message
         # analyze message
