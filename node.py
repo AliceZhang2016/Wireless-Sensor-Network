@@ -48,6 +48,17 @@ class Node():
 			
     
     def send(self, addr_des, port_des, msg):
+        code=0
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        addr = (addr_des, port_des)
+        try:
+            s.sendto(msg, addr)
+            print msg
+        except:
+            code=1
+        finally:
+            #time.sleep(3)
+            sock.close()
         # send msg from addr_source to addr_des
         
         # return action status code:
@@ -55,12 +66,56 @@ class Node():
         # 1: fail
         return code
     
-    def receive(self,addr_source, port_source, msg):
+    def receive(self,addr_source, port_source):
+        code=0
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        s.bind((addr_source, port_source)) 
+        msgHandler=MsgHandler()
+        while True:                                          
+            data, addr = s.recvfrom(1024)
+            print 'received' + data
+            type_msg=msgHandler.Decode(data)
+            if type_msg==1:
+                CH_addresss=msgHandler.Decode_CH_Change_Msg(msg)
+            elif type_msg==2:
+                new_network=msgHandler.Decode_List_Info_Msg(msg)
+            elif type_msg==3:
+                info=msgHandler.Decode_Info_Msg(msg)
+            elif type_msg==0:
+                print 'error in decode message'
+            #analyze data
         # connect to the speicified address and port
         # receive message
         # analyze message
         # store important information into the msg
         
+        # return action status code
+        # 0: success
+        # 1: fail
+        return code
+
+    def RefreshNetwork(self,info):
+        code=0
+        address=info[0]
+        energy_level=info[1]
+        coor=[0,0]
+        coor=info[2]
+        IsChange=False
+        try:
+            for i in range(len(self.network)):
+                if self.network[i][0]== address:
+                    self.network[i][1]=energy_level
+                    self.network[i][2]=coor
+                    IsChange=True
+                    break
+
+            if IsChange==False:
+                self.network.append(info)
+        except :
+            print 'info updata failed.'
+            code=1
+
         # return action status code
         # 0: success
         # 1: fail
