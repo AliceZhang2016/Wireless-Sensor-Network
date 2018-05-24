@@ -10,6 +10,7 @@ import threading
 import time
 import random
 import socket
+from readPhotoresistance import *
 
 # photoresistor
 import PCF8591 as ADC
@@ -18,14 +19,16 @@ import RPi.GPIO as GPIO
 
 global timerSendMsg
 global buffMsg
-global buffSize, BS_addr, BS_Port
+global buffSize, BS_addr, BS_Port	
 
 class Node():
     def __init__(self, nodeIndex, nodeName):
         #initialization of all the base parameters
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
-        self.energy = 100
+        self.energy = 500
+		self.energyCapacity = 1000 # max level of energy
+		self.energyThreshlod = 0.3
         self.addr = "202.120.000.000"
         self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
@@ -36,8 +39,15 @@ class Node():
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
         self.energyUsedParam = 0.2
+		
+		self.simulateData = 0
+		if self.simulateData:
+			self.sensor = photoresistorSimulator()
+		else:
+			self.sensor = photoresistor()
+			
     
-    def send(addr_des, port_des, msg):
+    def send(self, addr_des, port_des, msg):
         # send msg from addr_source to addr_des
         
         # return action status code:
@@ -45,7 +55,7 @@ class Node():
         # 1: fail
         return code
     
-    def receive(addr_source, port_source, msg):
+    def receive(self,addr_source, port_source, msg):
         # connect to the speicified address and port
         # receive message
         # analyze message
@@ -56,30 +66,36 @@ class Node():
         # 1: fail
         return code
     
-    def energyDissipated(source, des):
+    def energyDissipated(self, source, des):
         # receive the coordinate of source and destination
         # [xs,ys] and [xd,yd]
         # return the energy needed
         return self.energyUsedParam * ((xs-xd)**2+(ys-yd)**2)
     
-    def getEnergy():
+    def getEnergy(self):
         # obtain the current value mesured by photoresistor
-        # larger value, less solar energy
-        valuePhotoresistor = 175
-        # add the energy to the self.energy
-        self.energy += 300 - valuePhotoresistor
         return self.energy
+		
+	def rechargeEnergy(self):
+		# larger value, less solar energy
+		# add the energy to the self.energy
+		valuePhotoresistor = self.sensor.dataRead()
+		energy += 300 - valuePhotoresistor
+		self.energy = min(energy, self.energyCapacity)
+		if self.energy > self.energyCapacity * self.energyThreshlod:
+			self.codeStatus = 1
+		time.sleep(1)
         
-    def getNodeStatus():
+    def getNodeStatus(self):
         return self.codeStatus
 
-    def broadcast():
+    def broadcast(self):
         # used by cluster head 
         # broadcast msg to all the neighboring nodes to call for the energy info...
         # return action status code (success or not)
         return code
     
-    def selectNextHead():
+    def selectNextHead(self):
         # collect all the msg from other nodes
         # sort their energies
         # tell all the nodes in the network the new cluster head
@@ -96,6 +112,8 @@ if __name__ == '__main__':
     lastSend = time.time()
     CH_start = 0 # 1: Yes ;  0: No
     
+	thread.start_new_thread(node.rechargeEnergy, ())
+	
     while (1):
         # judge if current node is cluster node
         if (node.clusterHeadIndex == node.nodeIndex):
