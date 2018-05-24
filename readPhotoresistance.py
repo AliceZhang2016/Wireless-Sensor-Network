@@ -2,7 +2,7 @@ import PCF8591 as ADC
 import RPi.GPIO as GPIO
 import random
 
-class photoResistance():
+class photoresistor():
 	def __init__(self):
 		ADC.setup(0x48)
 		
@@ -19,7 +19,7 @@ class photoResistance():
 		# except KeyboardInterrupt: 
 			# pass
 			
-class photoResistanceSimulator():
+class photoresistorSimulator():
 	def __init__(self):
 		self.mean_lum = random.uniform(100, 200)
 		
