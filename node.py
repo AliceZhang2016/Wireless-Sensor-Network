@@ -156,7 +156,7 @@ class Node():
     	# larger value, less solar energy
     	# add the energy to the self.energy
     	valuePhotoresistor = self.sensor.dataRead()
-            print "valuePhotoresistor: " + str(valuePhotoresistor)
+        print "valuePhotoresistor: " + str(valuePhotoresistor)
     	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
     	energy = self.energy + (300 - valuePhotoresistor)/2
     	self.energy = min(energy, self.energyCapacity)
