@@ -77,7 +77,7 @@ class Node():
             print 'received' + data
             type_msg=msgHandler.Decode(data)
             if type_msg==1:
-                temp,code=msgHandler.Decode_CH_Change_Msg(msg)
+                temp,code=msgHandler.Decode_CH_Change_Msg(data)
                 if code==0:
                     self.clusterHead=temp
                     self.RefreshNetwork(temp)
@@ -85,20 +85,27 @@ class Node():
                 else:
                     print "error in decoding CH change msg."
             elif type_msg==2:
-                temp,code=msgHandler.Decode_List_Info_Msg(msg)
+                temp,code=msgHandler.Decode_List_Info_Msg(data)
                 if code==0:
                     self.network=temp
                     print self.network
                 else:
                     print "error in decoding list of info msg"
             elif type_msg==3:
-                temp,code=msgHandler.Decode_Info_Msg(msg)
+                temp,code=msgHandler.Decode_Info_Msg(data)
                 if code==0:                 
                     Ischanged=self.RefreshNetwork(temp)
                     print temp
                     print Ischanged
                 else:
                     print 'Error in decoding info msg'
+            elif type_msg==4:
+                temp,code=msgHandler.Decode_Sensor_Data(data)
+                if code==0:
+                    self.allSensorData=self.allSensorData+temp  
+                    print temp
+                else:
+                    print 'Error in decoding sensor data'               
                 
             elif type_msg==0:
                 print 'error in decode message'
