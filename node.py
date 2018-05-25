@@ -162,18 +162,35 @@ class Node():
     def getNodeStatus(self):
         return self.codeStatus
 
-    def broadcast(self):
-        # used by cluster head 
-        # broadcast msg to all the neighboring nodes to call for the energy info...
-        # return action status code (success or not)
+
+    def broadcast(self,port_des):
+        code=0
+        try:
+            # used by cluster head 
+            # broadcast msg to all the neighboring nodes to call for the energy info...
+            # return action status code (success or not)
+            broadcast = '<broadcast>'
+            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+            boradcast_addr = (broadcast, 8889)
+            myname = socket.getfqdn(socket.gethostname())
+            myaddr = socket.gethostbyname(myname)
+            
+            demand_msg='Demand_info:'+myaddr+';'
+            print demand_msg
+            s.sendto(demand_msg, boradcast_addr)
+            s.close()
+        except:
+            code=1
         return code
-    
+
     def selectNextHead(self):
-        # collect all the msg from other nodes
-        # sort their energies
-        # tell all the nodes in the network the new cluster head
-        # update self.clusterHeadIndex
-        self.clusterHeadIndex = newClusterHeadIndex
+        code=0
+        try:
+            self.network.sort(key= lambda x : x[1], reverse=True)
+            self.clusterHead=self.network[0]
+        except:
+            code=1
         return code
     
 if __name__ == '__main__':
