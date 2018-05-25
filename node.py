@@ -153,11 +153,18 @@ class Node():
 	# larger value, less solar energy
 	# add the energy to the self.energy
 	valuePhotoresistor = self.sensor.dataRead()
-	energy += 300 - valuePhotoresistor
+        print "valuePhotoresistor: " + str(valuePhotoresistor)
+	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
+	energy = self.energy + (300 - valuePhotoresistor)/2
 	self.energy = min(energy, self.energyCapacity)
 	if self.energy > self.energyCapacity * self.energyThreshlod:
 		self.codeStatus = 1
+	print "Energy Level: " + str(self.energy)
 	time.sleep(1)
+	
+    def rechargeEnergyThread(self):
+        while 1:
+            self.rechargeEnergy()
         
     def getNodeStatus(self):
         return self.codeStatus
@@ -202,7 +209,7 @@ if __name__ == '__main__':
     lastSend = time.time()
     CH_start = 0 # 1: Yes ;  0: No
     
-    thread.start_new_thread(node.rechargeEnergy, ())
+    thread.start_new_thread(node.rechargeEnergyThread, ())
 	
     while (1):
         # judge if current node is cluster node
