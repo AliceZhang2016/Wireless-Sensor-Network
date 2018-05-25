@@ -5,6 +5,20 @@ class MsgHandler():
 	def __init__(self):
 		pass
 
+	def Encode_Sensor_Data(self,SensorData):
+		msg='SensorData;'+SensorData+';'
+
+		return msg
+
+	def Decode_Sensor_Data(self,msg):
+		code=0
+		try:
+			Info_array=msg.split(';')
+		except:
+			code=1
+
+		return Info_array[1],code
+
 	def Encode_Info_Msg(self,address, energy_level, coor):
 		msg='Info;'+address+';'+str(energy_level)+';'+str(coor[0])+';'+str(coor[1])+';'
 		#ex: Info;127.0.0.1;100;25;35;
@@ -89,8 +103,11 @@ class MsgHandler():
 			type_msg=2
 		elif Info_array[0]=='Info':
 			type_msg=3
+		elif Info_array[0]=='SensorData':
+			type_msg=4
 		else:
 			type_msg=0
+
 		return type_msg
 
 
