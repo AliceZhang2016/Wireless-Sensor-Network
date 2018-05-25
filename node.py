@@ -34,7 +34,7 @@ class Node():
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
-        self.clusterHeadIndex = -1
+        self.clusterHead=()
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
@@ -53,7 +53,7 @@ class Node():
         addr = (addr_des, port_des)
         try:
             s.sendto(msg, addr)
-            print msg
+            print 'sent:' + msg
         except:
             code=1
         finally:
@@ -77,11 +77,29 @@ class Node():
             print 'received' + data
             type_msg=msgHandler.Decode(data)
             if type_msg==1:
-                CH_addresss=msgHandler.Decode_CH_Change_Msg(msg)
+                temp,code=msgHandler.Decode_CH_Change_Msg(msg)
+                if code==0:
+                    self.clusterHead=temp
+                    self.RefreshNetwork(temp)
+                    print 'CH changed:' + self.clusterHead
+                else:
+                    print "error in decoding CH change msg."
             elif type_msg==2:
-                new_network=msgHandler.Decode_List_Info_Msg(msg)
+                temp,code=msgHandler.Decode_List_Info_Msg(msg)
+                if code==0:
+                    self.network=temp
+                    print self.network
+                else:
+                    print "error in decoding list of info msg"
             elif type_msg==3:
-                info=msgHandler.Decode_Info_Msg(msg)
+                temp,code=msgHandler.Decode_Info_Msg(msg)
+                if code==0:                 
+                    Ischanged=self.RefreshNetwork(temp)
+                    print temp
+                    print Ischanged
+                else:
+                    print 'Error in decoding info msg'
+                
             elif type_msg==0:
                 print 'error in decode message'
             #analyze data
@@ -89,7 +107,7 @@ class Node():
         # receive message
         # analyze message
         # store important information into the msg
-        
+
         # return action status code
         # 0: success
         # 1: fail

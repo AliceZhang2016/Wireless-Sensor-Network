@@ -12,13 +12,17 @@ class MsgHandler():
 		return msg
 
 	def Decode_Info_Msg(self,msg):
-		Info_array=msg.split(';')
-		address=Info_array[1]
-		energy_level=Info_array[2]
-		coor=[0,0]
-		coor[0]=int(Info_array[3])
-		coor[1]=int(Info_array[4])
-		return address, energy_level, coor
+		code=0
+		try:
+			Info_array=msg.split(';')
+			address=Info_array[1]
+			energy_level=Info_array[2]
+			coor=[0,0]
+			coor[0]=int(Info_array[3])
+			coor[1]=int(Info_array[4])
+		except:
+			code=1
+		return (address, energy_level, coor),code
 
 	def Encode_List_Info_Msg(self,Network):
 		msg='List_Info;'
@@ -30,36 +34,47 @@ class MsgHandler():
 		return msg
 
 	def Decode_List_Info_Msg(self,msg):
-		Info_array=msg.split(';')
-		number_Element=int((len(Info_array)-2)/4)
-		print(Info_array)
-		Network=[]
-		i=0
-		k=1
-		while i<number_Element:
-			address=Info_array[3*i+k]
-			energy_level=Info_array[3*i+k+1]
-			coor=[0,0]
-			coor[0]=int(Info_array[3*i+k+2])
-			coor[1]=int(Info_array[3*i+k+3])
-			info=(address,energy_level,coor)
-			Network.append(info)
-			i+=1
-			k+=1
+		code=0
+		try:
+			Info_array=msg.split(';')
+			number_Element=int((len(Info_array)-2)/4)
+			print(Info_array)
+			Network=[]
+			i=0
+			k=1
+			while i<number_Element:
+				address=Info_array[3*i+k]
+				energy_level=Info_array[3*i+k+1]
+				coor=[0,0]
+				coor[0]=int(Info_array[3*i+k+2])
+				coor[1]=int(Info_array[3*i+k+3])
+				info=(address,energy_level,coor)
+				Network.append(info)
+				i+=1
+				k+=1
+		except:
+			code=1
 
-		return Network
+		return Network,code
 
 
-	def Encode_CH_Change_Msg(self,address):
-		msg='CH_change;'+address+';'
+	def Encode_CH_Change_Msg(self,address,energy_level,coor):
 		#ex: CH_chagne;127.0.0.1;
+		msg='CH_change;'+address+';'+str(energy_level)+';'+str(coor[0])+';'+str(coor[1])+';'
 		return msg
 
-	def Decode_CH_Change_Msg(msg):
-		Info_array=msg.split(';')
-		CH_addresss=Info_array[1]
-
-		return CH_addresss
+	def Decode_CH_Change_Msg(self,msg):
+		code=0
+		try:
+			Info_array=msg.split(';')
+			CH_addresss=Info_array[1]
+			energy_level=Info_array[2]
+			coor=[0,0]
+			coor[0]=int(Info_array[3])
+			coor[1]=int(Info_array[4])
+		except:
+			code=1
+		return (CH_addresss, energy_level, coor),code
 
 	def Encode(self):
 		pass
@@ -67,7 +82,8 @@ class MsgHandler():
 	def Decode(self,msg):
 		type_msg=0
 		Info_array=msg.split(';')
-		if Info_array[0]=='CH_chagne':
+		print(Info_array)
+		if Info_array[0]=='CH_change':
 			type_msg=1
 		elif Info_array[0]=='List_Info':
 			type_msg=2
