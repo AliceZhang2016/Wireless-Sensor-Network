@@ -11,6 +11,7 @@ import time
 import random
 import socket
 from readPhotoresistance import *
+import MsgHandler
 
 # photoresistor
 import PCF8591 as ADC
@@ -39,6 +40,8 @@ class Node():
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
         self.energyUsedParam = 0.2
+
+        self.allSensorData = "xixixixixi"
 		
 		self.simulateData = 0
 		if self.simulateData:
@@ -150,17 +153,17 @@ class Node():
         return self.energy
 		
     def rechargeEnergy(self):
-	# larger value, less solar energy
-	# add the energy to the self.energy
-	valuePhotoresistor = self.sensor.dataRead()
-        print "valuePhotoresistor: " + str(valuePhotoresistor)
-	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
-	energy = self.energy + (300 - valuePhotoresistor)/2
-	self.energy = min(energy, self.energyCapacity)
-	if self.energy > self.energyCapacity * self.energyThreshlod:
-		self.codeStatus = 1
-	print "Energy Level: " + str(self.energy)
-	time.sleep(1)
+    	# larger value, less solar energy
+    	# add the energy to the self.energy
+    	valuePhotoresistor = self.sensor.dataRead()
+            print "valuePhotoresistor: " + str(valuePhotoresistor)
+    	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
+    	energy = self.energy + (300 - valuePhotoresistor)/2
+    	self.energy = min(energy, self.energyCapacity)
+    	if self.energy > self.energyCapacity * self.energyThreshlod:
+    		self.codeStatus = 1
+    	print "Energy Level: " + str(self.energy)
+    	time.sleep(1)
 	
     def rechargeEnergyThread(self):
         while 1:
@@ -219,12 +222,18 @@ if __name__ == '__main__':
                 timerUpdateHead = time.time()
                 lastSend = time.time()
             
-            for nodeInfo in node.network:
-                recvmsg = ''
-                node.recv(nodeInfo[0], nodeInfo[1]) # collect all the info from neighboring nodes
-                if (recvmsg!=''):
-                    buff.append(recvmsg)
 
+            # receive the fake data from sensor
+            if (allSensorData!=""):
+                buff.append(node.allSensorData)
+                allSensorData = ""
+            #for nodeInfo in node.network:
+
+                #recvmsg = ''
+                #node.receive(nodeInfo[0], nodeInfo[1]) # collect all the info from neighboring nodes
+                #if (recvmsg!=''):
+                #    buff.append(recvmsg)
+            
             timeBetweenLast = time.time() - lastSend
             if (timeBetweenLast > 20):
                 sendMsg = ''
