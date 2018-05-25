@@ -18,8 +18,8 @@ import RPi.GPIO as GPIO
 
 
 global timerSendMsg
-global buffMsg
-global buffSize, BS_addr, BS_Port	
+global buffMsg, recvMsg
+global buffSize, BS_addr, BS_port	
 
 class Node():
     def __init__(self, nodeIndex, nodeName):
@@ -27,24 +27,24 @@ class Node():
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
         self.energy = 500
-	self.energyCapacity = 1000 # max level of energy
-	self.energyThreshlod = 0.3
+		self.energyCapacity = 1000 # max level of energy
+		self.energyThreshlod = 0.3
         self.addr = "202.120.000.000"
         self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
-        self.clusterHead=()
+        self.clusterHead=() #[address, energy, coordinate]
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
         self.energyUsedParam = 0.2
 		
-	self.simulateData = 0
-	if self.simulateData:
-		self.sensor = photoresistorSimulator()
-	else:
-		self.sensor = photoresistor()
+		self.simulateData = 0
+		if self.simulateData:
+			self.sensor = photoresistorSimulator()
+		else:
+			self.sensor = photoresistor()
 			
     
     def send(self, addr_des, port_des, msg):
@@ -179,7 +179,7 @@ class Node():
 if __name__ == '__main__':
     node = Node(1,'node1')
     #timerSendMsg = threading.Timer()
-    buffSize = 10 # for the cluster head
+    #buffSize = 10 # for the cluster head
     beginTime = time.time()
     timerUpdateHead = time.time()
     lastSend = time.time()
@@ -189,32 +189,39 @@ if __name__ == '__main__':
 	
     while (1):
         # judge if current node is cluster node
-        if (node.clusterHeadIndex == node.nodeIndex):
+        if (node.clusterHead[0] == node.address):
             if not CH_start:
                 CH_start = 1
                 timerUpdateHead = time.time()
                 lastSend = time.time()
             
+            for nodeInfo in node.network:
+                recvmsg = ''
+                node.recv(nodeInfo[0], nodeInfo[1]) # collect all the info from neighboring nodes
+                if (recvmsg!=''):
+                    buff.append(recvmsg)
+
+            timeBetweenLast = time.time() - lastSend
+            if (timeBetweenLast > 20):
+                sendMsg = ''
+                for i in range(0, len(buff)):
+                    sendMsg += '\t'+ buff[i]
+
+                node.send(BS_addr, BS_port, sendMsg)
+                lastSend = time.time()
+                buff = []
+
+
             duree = time.time() - timerUpdateHead
             if (duree > 100):
                 node.selectNextHead()
             
-            timeBetweenLast = time.time() - lastSend
-            if (timeBetweenLast > 20):
-                node.send(BS_addr, BS_port, buff)
-                lastSend = time.time()
-                #buff = []
+            
             #elif (len(buff)==buffSize):
             #    node.send(BS_addr, BS_port, buff)
             #    lastSend = time.time()
             
-            for nodeInfo in node.network:
-                recvmsg = ''
-                node.recv(nodeInfo[0], nodeInfo[1], recvmsg) # collect all the info from neighboring nodes
-                if (recvmsg!=''):
-                    buff.append(recvmsg)
-            
-            
+           
             '''
             timerUpdateHead = threading.Timer(100, node.selectNextHead)
             timerSendBS = threading.Timer(
@@ -226,7 +233,13 @@ if __name__ == '__main__':
                 
         else:
             CH_start = 0
-            node.send(CH_addr, CH_port, msg)
+
+            nodeTime = time.time() - lastSend
+            if nodeTime > node.period: 
+            	temperature = random.randint(20,25)
+            	sensorData = str(temperature)
+            	node.send(node.clusterHead[0], 8888, sensorData)
+     			lastSend = time.time()
             
 
             
