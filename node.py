@@ -225,9 +225,9 @@ if __name__ == '__main__':
             
 
             # receive the fake data from sensor
-            if (allSensorData!=""):
+            if (node.allSensorData!=""):
                 buff.append(node.allSensorData)
-                allSensorData = ""
+                node.allSensorData = ""
             #for nodeInfo in node.network:
 
                 #recvmsg = ''
