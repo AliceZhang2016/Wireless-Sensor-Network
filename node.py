@@ -28,8 +28,8 @@ class Node():
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
         self.energy = 500
-		self.energyCapacity = 1000 # max level of energy
-		self.energyThreshlod = 0.3
+	self.energyCapacity = 1000 # max level of energy
+	self.energyThreshlod = 0.3
         self.addr = "202.120.000.000"
         self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
