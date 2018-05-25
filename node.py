@@ -5,12 +5,13 @@ Spyder Editor
 
 This is a temporary script file.
 """
-
+import thread
 import threading
 import time
 import random
 import socket
 from readPhotoresistance import *
+import MsgHandler
 
 # photoresistor
 import PCF8591 as ADC
@@ -18,8 +19,8 @@ import RPi.GPIO as GPIO
 
 
 global timerSendMsg
-global buffMsg
-global buffSize, BS_addr, BS_Port	
+global buffMsg, recvMsg
+global buffSize, BS_addr, BS_port	
 
 class Node():
     def __init__(self, nodeIndex, nodeName):
@@ -27,24 +28,32 @@ class Node():
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
         self.energy = 500
-		self.energyCapacity = 1000 # max level of energy
-		self.energyThreshlod = 0.3
-        self.addr = "202.120.000.000"
-        self.coordinate = [23,35]  #[x,y]
+	self.energyCapacity = 1000 # max level of energy
+	self.energyThreshlod = 0.3
+        #self.addr = "202.120.000.000"
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(("8.8.8.8",80))
+	self.addr = s.getsockname()[0]
+	s.close()
+	self.coordinate = [random.randint(0,40), random.randint(0,40)]
+	#self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
-        self.clusterHead=()
+	# default set
+        self.clusterHead=("202.120.000.000", 500, [23,35]) #[address, energy, coordinate]
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
         self.energyUsedParam = 0.2
+
+        self.allSensorData = "xixixixixi"
 		
-		self.simulateData = 0
-		if self.simulateData:
-			self.sensor = photoresistorSimulator()
-		else:
-			self.sensor = photoresistor()
+	self.simulateData = 0
+	if self.simulateData:
+		self.sensor = photoresistorSimulator()
+	else:
+		self.sensor = photoresistor()
 			
     
     def send(self, addr_des, port_des, msg):
@@ -156,15 +165,22 @@ class Node():
         # obtain the current value mesured by photoresistor
         return self.energy
 		
-	def rechargeEnergy(self):
-		# larger value, less solar energy
-		# add the energy to the self.energy
-		valuePhotoresistor = self.sensor.dataRead()
-		energy += 300 - valuePhotoresistor
-		self.energy = min(energy, self.energyCapacity)
-		if self.energy > self.energyCapacity * self.energyThreshlod:
-			self.codeStatus = 1
-		time.sleep(1)
+    def rechargeEnergy(self):
+    	# larger value, less solar energy
+    	# add the energy to the self.energy
+    	valuePhotoresistor = self.sensor.dataRead()
+        print "valuePhotoresistor: " + str(valuePhotoresistor)
+    	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
+    	energy = self.energy + (300 - valuePhotoresistor)/2
+    	self.energy = min(energy, self.energyCapacity)
+    	if self.energy > self.energyCapacity * self.energyThreshlod:
+    		self.codeStatus = 1
+    	print "Energy Level: " + str(self.energy)
+    	time.sleep(1)
+	
+    def rechargeEnergyThread(self):
+        while 1:
+            self.rechargeEnergy()
         
     def getNodeStatus(self):
         return self.codeStatus
@@ -201,44 +217,58 @@ class Node():
         return code
     
 if __name__ == '__main__':
+    buff = []
     node = Node(1,'node1')
     #timerSendMsg = threading.Timer()
-    buffSize = 10 # for the cluster head
+    #buffSize = 10 # for the cluster head
     beginTime = time.time()
     timerUpdateHead = time.time()
     lastSend = time.time()
     CH_start = 0 # 1: Yes ;  0: No
     
-	thread.start_new_thread(node.rechargeEnergy, ())
+    thread.start_new_thread(node.rechargeEnergyThread, ())
 	
     while (1):
         # judge if current node is cluster node
-        if (node.clusterHeadIndex == node.nodeIndex):
+        if (node.clusterHead[0] == node.addr):
             if not CH_start:
                 CH_start = 1
                 timerUpdateHead = time.time()
                 lastSend = time.time()
             
+
+            # receive the fake data from sensor
+            if (node.allSensorData!=""):
+                buff.append(node.allSensorData)
+                node.allSensorData = ""
+            #for nodeInfo in node.network:
+
+                #recvmsg = ''
+                #node.receive(nodeInfo[0], nodeInfo[1]) # collect all the info from neighboring nodes
+                #if (recvmsg!=''):
+                #    buff.append(recvmsg)
+            
+            timeBetweenLast = time.time() - lastSend
+            if (timeBetweenLast > 20):
+                sendMsg = ''
+                for i in range(0, len(buff)):
+                    sendMsg += '\t'+ buff[i]
+
+                node.send(BS_addr, BS_port, sendMsg)
+                lastSend = time.time()
+                buff = []
+
+
             duree = time.time() - timerUpdateHead
             if (duree > 100):
                 node.selectNextHead()
             
-            timeBetweenLast = time.time() - lastSend
-            if (timeBetweenLast > 20):
-                node.send(BS_addr, BS_port, buff)
-                lastSend = time.time()
-                buff = []
-            elif (len(buff)==buffSize):
-                node.send(BS_addr, BS_port, buff)
-                lastSend = time.time()
             
-            for nodeInfo in node.network:
-                recvmsg = ''
-                node.recv(nodeInfo[0], nodeInfo[1], recvmsg) # collect all the info from neighboring nodes
-                if (recvmsg!=''):
-                    buff.append(recvmsg)
+            #elif (len(buff)==buffSize):
+            #    node.send(BS_addr, BS_port, buff)
+            #    lastSend = time.time()
             
-            
+           
             '''
             timerUpdateHead = threading.Timer(100, node.selectNextHead)
             timerSendBS = threading.Timer(
@@ -250,12 +280,11 @@ if __name__ == '__main__':
                 
         else:
             CH_start = 0
-            node.send(CH_addr, CH_port, msg)
-            
 
-            
-            
-        
-    
-        
-        
+            nodeTime = time.time() - lastSend
+            if nodeTime > node.period: 
+            	temperature = random.randint(20,25)
+            	sensorData = str(temperature)
+            	node.send(node.clusterHead[0], 8888, sensorData)
+     		lastSend = time.time()         
+                   
