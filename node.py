@@ -217,7 +217,7 @@ if __name__ == '__main__':
 	
     while (1):
         # judge if current node is cluster node
-        if (node.clusterHead[0] == node.address):
+        if (node.clusterHead[0] == node.addr):
             if not CH_start:
                 CH_start = 1
                 timerUpdateHead = time.time()
