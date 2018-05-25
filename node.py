@@ -30,8 +30,13 @@ class Node():
         self.energy = 500
 	self.energyCapacity = 1000 # max level of energy
 	self.energyThreshlod = 0.3
-        self.addr = "202.120.000.000"
-        self.coordinate = [23,35]  #[x,y]
+        #self.addr = "202.120.000.000"
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	s.connect(("8.8.8.8",80))
+	self.addr = s.getsockname()[0]
+	s.close()
+	self.coordinate = [random.randint(0,40), random.randint(0,40)]
+	#self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
@@ -212,6 +217,7 @@ class Node():
         return code
     
 if __name__ == '__main__':
+    buff = []
     node = Node(1,'node1')
     #timerSendMsg = threading.Timer()
     #buffSize = 10 # for the cluster head
@@ -280,12 +286,5 @@ if __name__ == '__main__':
             	temperature = random.randint(20,25)
             	sensorData = str(temperature)
             	node.send(node.clusterHead[0], 8888, sensorData)
-     		lastSend = time.time()
-            
-
-            
-            
-        
-    
-        
-        
+     		lastSend = time.time()         
+                   
