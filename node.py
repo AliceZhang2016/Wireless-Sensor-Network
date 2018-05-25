@@ -28,8 +28,9 @@ class Node():
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
         self.energy = 500
+	self.energyLock = threading.Lock()
 	self.energyCapacity = 1000 # max level of energy
-	self.energyThreshlod = 0.3
+	self.energyThreshold = 0.3
         #self.addr = "202.120.000.000"
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.connect(("8.8.8.8",80))
@@ -41,6 +42,7 @@ class Node():
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
 	# default set
+	#!!!!!!!!!!!!!!!!!!!!!!!!!!# Add port!!!!!!!!################################ [addr, port, energy, coor]
         self.clusterHead=("202.120.000.000", 500, [23,35]) #[address, energy, coordinate]
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
@@ -57,7 +59,10 @@ class Node():
 			
     
     def send(self, addr_des, port_des, msg):
-        code=0
+	if self.codeStatus == 0:
+	    return
+        energyDisspated(addr_des, port_des)
+	code=0
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         addr = (addr_des, port_des)
         try:
@@ -67,7 +72,7 @@ class Node():
             code=1
         finally:
             #time.sleep(3)
-            sock.close()
+            s.close()
         # send msg from addr_source to addr_des
         
         # return action status code:
@@ -155,12 +160,20 @@ class Node():
         # 1: fail
         return code
     
-    def energyDissipated(self, source, des):
+    def energyDissipated(self, des_addr, des_port, flag=0):
         # receive the coordinate of source and destination
         # [xs,ys] and [xd,yd]
         # return the energy needed
-        return self.energyUsedParam * ((xs-xd)**2+(ys-yd)**2)
-    
+        #return self.energyUsedParam * ((xs-xd)**2+(ys-yd)**2)
+	self.energyLock.acquire()
+	if (des_addr == BS_addr):
+	    self.energy -= 100
+        else:
+	    self.energy -= 30
+	if self.energy <= self.energyCapacity * self.energyThreshold:
+	    self.codeStatus = 0
+	self.energyLock.release()
+		
     def getEnergy(self):
         # obtain the current value mesured by photoresistor
         return self.energy
@@ -172,9 +185,11 @@ class Node():
         print "valuePhotoresistor: " + str(valuePhotoresistor)
     	print "Recharged Energy: " + str((300 - valuePhotoresistor)/2)
     	energy = self.energy + (300 - valuePhotoresistor)/2
+	self.energyLock.acquire()
     	self.energy = min(energy, self.energyCapacity)
-    	if self.energy > self.energyCapacity * self.energyThreshlod:
+    	if self.energy > self.energyCapacity * self.energyThreshd:
     		self.codeStatus = 1
+	self.energyLock.release()
     	print "Energy Level: " + str(self.energy)
     	time.sleep(1)
 	
@@ -186,7 +201,7 @@ class Node():
         return self.codeStatus
 
 
-    def broadcast(self,port_des):
+    def broadcast(self):
         code=0
         try:
             # used by cluster head 
@@ -195,14 +210,16 @@ class Node():
             broadcast = '<broadcast>'
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-            boradcast_addr = (broadcast, 8889)
+            broadcast_addr = (broadcast, 8889)
             myname = socket.getfqdn(socket.gethostname())
             myaddr = socket.gethostbyname(myname)
             
             demand_msg='Demand_info:'+myaddr+';'
             print demand_msg
-            s.sendto(demand_msg, boradcast_addr)
+            s.sendto(demand_msg, broadcast_addr)
             s.close()
+	    
+	    self.energyDissipated('','',flag=1)
         except:
             code=1
         return code
@@ -260,8 +277,17 @@ if __name__ == '__main__':
 
 
             duree = time.time() - timerUpdateHead
+	    # change cluster head
             if (duree > 100):
+		node.broadcast()
                 node.selectNextHead()
+		# tell the BS the information of the network
+		node.send(BS_addr, BS_port, Encode_List_Info_Msg(node.network))
+		# send information to the new cluster head to let him be the new cluster head
+		for eachNode in self.network:
+		    node.send(eachNode[0], eachNode[1], Encode_CH_Change_Msg(node.clusterHead[0],node.clusterHead[1],node.clusterHead[2]))
+		
+		
             
             
             #elif (len(buff)==buffSize):
