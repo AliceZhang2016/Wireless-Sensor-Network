@@ -27,8 +27,8 @@ class Node():
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
         self.energy = 500
-		self.energyCapacity = 1000 # max level of energy
-		self.energyThreshlod = 0.3
+	self.energyCapacity = 1000 # max level of energy
+	self.energyThreshlod = 0.3
         self.addr = "202.120.000.000"
         self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
@@ -40,11 +40,11 @@ class Node():
         
         self.energyUsedParam = 0.2
 		
-		self.simulateData = 0
-		if self.simulateData:
-			self.sensor = photoresistorSimulator()
-		else:
-			self.sensor = photoresistor()
+	self.simulateData = 0
+	if self.simulateData:
+		self.sensor = photoresistorSimulator()
+	else:
+		self.sensor = photoresistor()
 			
     
     def send(self, addr_des, port_des, msg):
@@ -149,15 +149,15 @@ class Node():
         # obtain the current value mesured by photoresistor
         return self.energy
 		
-	def rechargeEnergy(self):
-		# larger value, less solar energy
-		# add the energy to the self.energy
-		valuePhotoresistor = self.sensor.dataRead()
-		energy += 300 - valuePhotoresistor
-		self.energy = min(energy, self.energyCapacity)
-		if self.energy > self.energyCapacity * self.energyThreshlod:
-			self.codeStatus = 1
-		time.sleep(1)
+    def rechargeEnergy(self):
+	# larger value, less solar energy
+	# add the energy to the self.energy
+	valuePhotoresistor = self.sensor.dataRead()
+	energy += 300 - valuePhotoresistor
+	self.energy = min(energy, self.energyCapacity)
+	if self.energy > self.energyCapacity * self.energyThreshlod:
+		self.codeStatus = 1
+	time.sleep(1)
         
     def getNodeStatus(self):
         return self.codeStatus
@@ -185,7 +185,7 @@ if __name__ == '__main__':
     lastSend = time.time()
     CH_start = 0 # 1: Yes ;  0: No
     
-	thread.start_new_thread(node.rechargeEnergy, ())
+    thread.start_new_thread(node.rechargeEnergy, ())
 	
     while (1):
         # judge if current node is cluster node
@@ -203,10 +203,10 @@ if __name__ == '__main__':
             if (timeBetweenLast > 20):
                 node.send(BS_addr, BS_port, buff)
                 lastSend = time.time()
-                buff = []
-            elif (len(buff)==buffSize):
-                node.send(BS_addr, BS_port, buff)
-                lastSend = time.time()
+                #buff = []
+            #elif (len(buff)==buffSize):
+            #    node.send(BS_addr, BS_port, buff)
+            #    lastSend = time.time()
             
             for nodeInfo in node.network:
                 recvmsg = ''
