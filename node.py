@@ -195,30 +195,33 @@ if __name__ == '__main__':
                 timerUpdateHead = time.time()
                 lastSend = time.time()
             
-            duree = time.time() - timerUpdateHead
-            if (duree > 100):
-                node.selectNextHead()
-            
-            timeBetweenLast = time.time() - lastSend
-            if (timeBetweenLast > 20):
-            	sendMsg = ''
-            	for i in range(0, len(buff)):
-            		sendMsg += '\t'+ buff[i]
-
-                node.send(BS_addr, BS_port, sendMsg)
-                lastSend = time.time()
-                buff = []
-            #elif (len(buff)==buffSize):
-            #    node.send(BS_addr, BS_port, buff)
-            #    lastSend = time.time()
-            
             for nodeInfo in node.network:
                 recvmsg = ''
                 node.recv(nodeInfo[0], nodeInfo[1]) # collect all the info from neighboring nodes
                 if (recvmsg!=''):
                     buff.append(recvmsg)
+
+            timeBetweenLast = time.time() - lastSend
+            if (timeBetweenLast > 20):
+                sendMsg = ''
+                for i in range(0, len(buff)):
+                    sendMsg += '\t'+ buff[i]
+
+                node.send(BS_addr, BS_port, sendMsg)
+                lastSend = time.time()
+                buff = []
+
+
+            duree = time.time() - timerUpdateHead
+            if (duree > 100):
+                node.selectNextHead()
             
             
+            #elif (len(buff)==buffSize):
+            #    node.send(BS_addr, BS_port, buff)
+            #    lastSend = time.time()
+            
+           
             '''
             timerUpdateHead = threading.Timer(100, node.selectNextHead)
             timerSendBS = threading.Timer(
