@@ -43,11 +43,11 @@ class Node():
 
         self.allSensorData = "xixixixixi"
 		
-		self.simulateData = 0
-		if self.simulateData:
-			self.sensor = photoresistorSimulator()
-		else:
-			self.sensor = photoresistor()
+	self.simulateData = 0
+	if self.simulateData:
+		self.sensor = photoresistorSimulator()
+	else:
+		self.sensor = photoresistor()
 			
     
     def send(self, addr_des, port_des, msg):
