@@ -35,7 +35,8 @@ class Node():
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
         self.period = random.randint(5,15) # property of the node.
-        self.clusterHead=() #[address, energy, coordinate]
+	# default set
+        self.clusterHead=("202.120.000.000", 500, [23,35]) #[address, energy, coordinate]
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         
