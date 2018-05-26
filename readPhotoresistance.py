@@ -24,4 +24,4 @@ class photoresistorSimulator():
 		self.mean_lum = random.uniform(100, 200)
 		
 	def dataRead(self):
-		return self.mean_lum + random(0, 10) - 5
+		return self.mean_lum + random.uniform(0, 10) - 5
