@@ -322,5 +322,5 @@ if __name__ == '__main__':
                 temperature = random.randint(20,25)
                 sensorData = str(temperature)
                 node.send(node.clusterHead[0], 8888, sensorData)
-            lastSend = time.time()         
+                lastSend = time.time()         
                    
