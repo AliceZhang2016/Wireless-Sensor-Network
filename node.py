@@ -61,7 +61,7 @@ class Node():
     def send(self, addr_des, port_des, msg):
         if self.codeStatus == 0:
             return
-        energyDisspated(addr_des, port_des)
+        self.energyDisspated(addr_des, port_des)
         code=0
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         addr = (addr_des, port_des)
