@@ -20,7 +20,9 @@ import RPi.GPIO as GPIO
 
 global timerSendMsg
 global buffMsg, recvMsg
-global buffSize, BS_addr, BS_port   
+global buffSize, BS_addr, BS_port
+BS_addr = 10.0.0.1
+BS_port = 23333
 
 class Node():
     def __init__(self, nodeIndex, nodeName):
