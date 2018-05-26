@@ -13,11 +13,20 @@ class MsgHandler():
 	def Decode_Sensor_Data(self,msg):
 		code=0
 		try:
-			Info_array=msg.split(';')
+			msg=msg[6:len(msg)]
 		except:
 			code=1
 
-		return Info_array[1],code
+		return msg,code
+
+	def Decode_Broadcast_msg(self,msg):
+                code=0
+                try:
+                        Info_array=msg.split(';')
+                except:
+                        code=1
+
+                return Info_array[1],code
 
 	def Encode_Info_Msg(self,address, energy_level, coor):
 		msg='Info;'+address+';'+str(energy_level)+';'+str(coor[0])+';'+str(coor[1])+';'
@@ -30,13 +39,13 @@ class MsgHandler():
 		try:
 			Info_array=msg.split(';')
 			address=Info_array[1]
-			energy_level=Info_array[2]
+			energy_level=int(Info_array[2])
 			coor=[0,0]
 			coor[0]=int(Info_array[3])
 			coor[1]=int(Info_array[4])
 		except:
 			code=1
-		return (address, energy_level, coor),code
+		return [address, energy_level, coor],code
 
 	def Encode_List_Info_Msg(self,Network):
 		msg='List_Info;'
@@ -52,17 +61,17 @@ class MsgHandler():
 		try:
 			Info_array=msg.split(';')
 			number_Element=int((len(Info_array)-2)/4)
-			print(Info_array)
+			#print(Info_array)
 			Network=[]
 			i=0
 			k=1
 			while i<number_Element:
 				address=Info_array[3*i+k]
-				energy_level=Info_array[3*i+k+1]
+				energy_level=int(Info_array[3*i+k+1])
 				coor=[0,0]
 				coor[0]=int(Info_array[3*i+k+2])
 				coor[1]=int(Info_array[3*i+k+3])
-				info=(address,energy_level,coor)
+				info=[address,energy_level,coor]
 				Network.append(info)
 				i+=1
 				k+=1
@@ -82,13 +91,13 @@ class MsgHandler():
 		try:
 			Info_array=msg.split(';')
 			CH_addresss=Info_array[1]
-			energy_level=Info_array[2]
+			energy_level=int(Info_array[2])
 			coor=[0,0]
 			coor[0]=int(Info_array[3])
 			coor[1]=int(Info_array[4])
 		except:
 			code=1
-		return (CH_addresss, energy_level, coor),code
+		return [CH_addresss, energy_level, coor],code
 
 	def Encode(self):
 		pass
@@ -96,7 +105,7 @@ class MsgHandler():
 	def Decode(self,msg):
 		type_msg=0
 		Info_array=msg.split(';')
-		print(Info_array)
+		#print(Info_array)
 		if Info_array[0]=='CH_change':
 			type_msg=1
 		elif Info_array[0]=='List_Info':
@@ -105,6 +114,8 @@ class MsgHandler():
 			type_msg=3
 		elif Info_array[0]=='SensorData':
 			type_msg=4
+                elif Info_array[0]=='Demand_info':
+                        type_msg=5
 		else:
 			type_msg=0
 
