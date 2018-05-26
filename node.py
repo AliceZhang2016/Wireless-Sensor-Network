@@ -194,7 +194,7 @@ class Node():
         energy = self.energy + (300 - valuePhotoresistor)/2
         self.energyLock.acquire()
         self.energy = min(energy, self.energyCapacity)
-        if self.energy > self.energyCapacity * self.energyThreshd:
+        if self.energy > self.energyCapacity * self.energyThreshold:
             self.codeStatus = 1
         self.energyLock.release()
         print "Energy Level: " + str(self.energy)
