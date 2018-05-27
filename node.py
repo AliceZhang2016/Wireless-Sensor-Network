@@ -22,8 +22,8 @@ global timerSendMsg
 global buffMsg, recvMsg
 global buffSize, BS_addr, BS_port   
 
-BS_addr = '10.0.0.1'
-BS_port = '23333'
+BS_addr = '192.168.1.106'
+BS_port = 23333
 
 PORT=10086
 
@@ -32,7 +32,7 @@ class Node():
         #initialization of all the base parameters
         self.nodeIndex = nodeIndex
         self.nodeName = nodeName
-        self.energy = 500
+        self.energy = 1000
         self.energyLock = threading.Lock()
         self.energyCapacity = 1000 # max level of energy
         self.energyThreshold = 0.3
@@ -45,17 +45,18 @@ class Node():
         #self.coordinate = [23,35]  #[x,y]
         self.codeStatus = 1  # 1: alive ; 0: dead
         # time between every two msg sent
-        self.period = 2 # property of the node.
+        self.period = random.randint(1,5) # property of the node.
         # default set
         #!!!!!!!!!!!!!!!!!!!!!!!!!!# Add port!!!!!!!!################################ [addr, port, energy, coor]
-        self.clusterHead=["192.168.1.193", 500, [23,35]] #[address, energy, coordinate]
+        #self.clusterHead=["192.168.1.193", 500, [23,35]] #[address, energy, coordinate]
+        self.clusterHead=[]
         # [] for ordinary node but a list of all nodes for the cluster head
         self.network = [] # a list of [(nodeAddr, nodePort),...]
         self.network.append([self.addr,self.energy,self.coordinate])
         
         self.energyUsedParam = 0.2
 
-        self.allSensorData = "xixixixixi"
+        self.allSensorData = ""
         
         self.simulateData = 0
         if self.simulateData:
@@ -73,7 +74,7 @@ class Node():
         addr = (addr_des, port_des)
         try:
             s.sendto(msg, addr)
-            print 'sent:' + msg
+            print 'sent:' + msg + ' to ' + addr_des
         except:
             code=1
         finally:
@@ -87,6 +88,14 @@ class Node():
         # 1: fail
         return code
     
+
+    def calculateCoor(self, x, y):
+        distance = sqrt((x[0]-y[0])**2 + (x[1]-y[1])**2)
+        if distance > 50:
+            return 0
+        else:
+            return 1
+        
     
     def receive(self,addr_source, port_source):
         code=0
@@ -101,20 +110,27 @@ class Node():
             if type_msg==1:
                 temp,code=msgHandler.Decode_CH_Change_Msg(data)
                 if code==0:
-                    self.clusterHead=temp
-                    self.RefreshNetwork(temp)
-                    print '******************************'
-                    print 'received: '
-                    print temp
-                    print 'CH changed:'
-                    print self.clusterHead
+                    judge = self.calculateCoor(temp[2], self.coor)
+                    if judge:
+                        self.clusterHead=temp
+                        self.RefreshNetwork(temp)
+                        print '******************************'
+                        print 'received: CH change message: ' + str(temp)
+                    else:
+                        newInfo = [self.addr, self.energy, self.coor]
+                        self.clusterHead = newInfo
+                        self.RefreshNetwork(newInfo)
+                        print '******************************'
+                        print 'received: CH change message: ' + str(newInfo)
+
+                    print 'CH changed to:'  + str(self.clusterHead)
                 else:
                     print "error in decoding CH change msg."
             elif type_msg==2:
                 temp,code=msgHandler.Decode_List_Info_Msg(data)
                 if code==0:
                     self.network=temp
-                    print 'received: '
+                    print 'received: ' + addr_source
                     print self.network
                 else:
                     print "error in decoding list of info msg"
@@ -122,10 +138,10 @@ class Node():
                 temp,code=msgHandler.Decode_Info_Msg(data)
                 if code==0:                 
                     Ischanged=self.RefreshNetwork(temp)
-                    print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+                    print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
                     #print temp[0]
-                    print 'received: '
-                    print temp
+                    print 'received Info from:  ' + str(temp)
+                    #print temp
                     #print Ischanged
                 else:
                     print 'Error in decoding info msg'
@@ -133,21 +149,19 @@ class Node():
                 temp,code=msgHandler.Decode_Sensor_Data(data)
                 if code==0:
                     self.allSensorData=self.allSensorData+temp  
-                    print 'received: '
-                    print temp
+                    print 'received sensor data: '  + str(temp)
                 else:
                     print 'Error in decoding sensor data'               
                 #TODO: boradcast response 
             elif type_msg==5:
                  addr_des,code=msgHandler.Decode_Broadcast_msg(data)
                  if code==0:
-                    print '^^^^^^^^^^^^^^^^^^^^^'
-                    print 'Received broadcast from: ' + addr_des
-                    print 'Own address: ' + self.addr
+                    print '^^^^^^^^^^^^^^^^^'
+                    print 'Received broadcast from:' + addr_des
+                    print 'Own address' + self.addr
                     msg=msgHandler.Encode_Info_Msg(self.addr,self.energy,self.coordinate)
-                    print msg
-                    IsSent=self.send(addr_des,PORT,msg)
-                    print 'IsSent: ' +str(IsSent)
+                    IsSent = self.send(addr_des, PORT,msg)
+                    #print 'IsSent; ' + str(IsSent)
                  else:
                     print 'Error in decoding broadcast message.'   
             elif type_msg==0:
@@ -163,11 +177,35 @@ class Node():
         # 1: fail
         return code
 
+    def initReceive(self):
+        code=0
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        s.bind(('', PORT)) 
+        msgHandler=MsgHandler()
+        while True:
+            data, addr = s.recvfrom(1024)
+            #print 'received' + data
+            type_msg=msgHandler.Decode(data)
+            if type_msg==1:
+                temp,code=msgHandler.Decode_CH_Change_Msg(data)
+                if code==0:
+                    self.clusterHead=temp
+                    self.RefreshNetwork(temp)
+                    print '******************************'
+                    print 'received CH change message: ' + str(temp)
+                    print 'CH changed to:' + str(self.clusterHead)
+                else:
+                    print "error in decoding CH change msg."
+                s.close()
+                break
+        return code
+
         
     def RefreshNetwork(self,info):
         code=0
-        print '-----------Refresh-------------'
-        print(info)
+        #print '-----------Refresh-------------'
+        #print(info)
         address=info[0]
         energy_level=int(info[1])
         coor=[0,0]
@@ -176,7 +214,7 @@ class Node():
         #try:
         for i in range(len(self.network)):
             if self.network[i][0]== address:
-                self.network[i][1]=energy_level
+                self.network[i][1]=int(energy_level)
                 self.network[i][2]=coor
                 IsChange=True
                 break
@@ -202,12 +240,12 @@ class Node():
         if (des_addr == BS_addr):
             self.energy -= 100
         else:
-            self.energy -= 40
+            self.energy -= 30
         if self.energy <= self.energyCapacity * self.energyThreshold:
             self.codeStatus = 0
             
         self.energyLock.release()
-        print "Energy remained" + str(self.energy)
+        #print "Energy remained" + str(self.energy)
         
         
     def getEnergy(self):
@@ -220,12 +258,12 @@ class Node():
         # add the energy to the self.energy
         valuePhotoresistor = self.sensor.dataRead()
         #print "valuePhotoresistor: " + str(valuePhotoresistor)
-        # print "Recharged Energy: " + str(((300 - valuePhotoresistor)/20) ** 2)
-        energy = self.energy + ((300 - valuePhotoresistor)/20) ** 2
+        print "Recharged Energy: " + str(((300 - valuePhotoresistor)/20)**2)
+        energy = self.energy + ((300 - valuePhotoresistor)/20)**2
         self.energyLock.acquire()
         self.energy = min(energy, self.energyCapacity)
         if self.energy > self.energyCapacity * self.energyThreshold:
-            self.codeStatus = 1 #python get ip address
+            self.codeStatus = 1
         self.energyLock.release()
         #print "Energy Level: " + str(self.energy)
         time.sleep(1)
@@ -277,6 +315,12 @@ class Node():
 if __name__ == '__main__':
     buff = []
     node = Node(1,'node1')
+    MS_Handler=MsgHandler()
+    print node.clusterHead
+    node.send(BS_addr, BS_port, MS_Handler.Encode_Info_Msg(node.addr, node.energy, node.coordinate))
+    node.initReceive()
+    print node.clusterHead
+    
     #timerSendMsg = threading.Timer()
     #buffSize = 10 # for the cluster head
     beginTime = time.time()
@@ -289,7 +333,7 @@ if __name__ == '__main__':
         thread.start_new_thread(node.receive,(HOST,PORT,))
     except:
         print 'Thread Create Failed.'
-    MS_Handler=MsgHandler()
+    
     while (1):
         # judge if current node is cluster node
         if (node.clusterHead[0] == node.addr):
@@ -322,10 +366,10 @@ if __name__ == '__main__':
 
             duree = time.time() - timerUpdateHead
             # change cluster head
-            if (duree > 20):
+            if (duree > 40):
                 print "Find next clusterhead"
                 node.broadcast()
-                time.sleep(5)
+                time.sleep(2)
                 print "Broadcast end"
                 print "Before change: " + str(node.clusterHead[0])
                 print node.network
@@ -363,12 +407,13 @@ if __name__ == '__main__':
                 
         else:
             CH_start = 0
-
             nodeTime = time.time() - lastSend
-            if nodeTime > node.period: 
-                temperature = random.randint(20,25)
-                sensorData = str(temperature)
-                sensorData=MS_Handler.Encode_Sensor_Data(sensorData)
-                node.send(node.clusterHead[0], PORT, sensorData)
-                lastSend = time.time()         
+
+
+        if nodeTime > node.period: 
+            temperature = random.randint(20,25)
+            sensorData = str(temperature)
+            sensorData=MS_Handler.Encode_Sensor_Data(sensorData)
+            node.send(node.clusterHead[0], PORT, sensorData)
+            lastSend = time.time()         
                    
