@@ -75,7 +75,9 @@ class Node():
         addr = (addr_des, port_des)
         try:
             s.sendto(msg, addr)
-            print 'sent:' + msg + ' to ' + addr_des
+            print ' '
+            print 'sent: ' + msg + ' to ' + addr_des
+            print ' '
         except:
             code=1
         finally:
@@ -116,22 +118,25 @@ class Node():
                         self.clusterHead=temp
                         self.RefreshNetwork(temp)
                         print '******************************'
-                        print 'received: CH change message: ' + str(temp)
+                        print 'Received: CH change message: ' + str(temp)
                     else:
                         newInfo = [self.addr, self.energy, self.coor]
                         self.clusterHead = newInfo
                         self.RefreshNetwork(newInfo)
                         print '******************************'
-                        print 'received: CH change message: ' + str(newInfo)
+                        print 'Received: CH change message: ' + str(newInfo)
+                        print ' '
 
-                    print 'CH changed to:'  + str(self.clusterHead)
+                    print 'CH is changed to: '  + str(self.clusterHead)
+                    print ' '
                 else:
-                    print "error in decoding CH change msg."
+                    print "Error in decoding CH change msg."
+                    print ' '
             elif type_msg==2:
                 temp,code=msgHandler.Decode_List_Info_Msg(data)
                 if code==0:
                     self.network=temp
-                    print 'received: ' + addr_source
+                    print 'Received: ' + addr_source
                     print self.network
                 else:
                     print "error in decoding list of info msg"
@@ -139,34 +144,41 @@ class Node():
                 temp,code=msgHandler.Decode_Info_Msg(data)
                 if code==0:                 
                     Ischanged=self.RefreshNetwork(temp)
-                    print '!!!!!!!!!!!!!!!!!!!!!!!!!!!!!'
+                    print '******************************'
                     #print temp[0]
-                    print 'received Info from:  ' + str(temp)
+                    print 'Received Info msg from:  ' + str(temp[0])
+                    print ' '
                     #print temp
                     #print Ischanged
                 else:
                     print 'Error in decoding info msg'
+                    print ' '
             elif type_msg==4:
                 temp,code=msgHandler.Decode_Sensor_Data(data)
                 if code==0:
                     self.allSensorData=self.allSensorData+temp  
-                    print 'received sensor data: '  + str(temp)
+                    print '******************************'
+                    print 'Received sensor data: '  + str(temp)
+                    print ' '
                 else:
-                    print 'Error in decoding sensor data'               
+                    print 'Error in decoding sensor data' 
+                    print ' '              
                 #TODO: boradcast response 
             elif type_msg==5:
                  addr_des,code=msgHandler.Decode_Broadcast_msg(data)
                  if code==0:
-                    print '^^^^^^^^^^^^^^^^^'
+                    print '******************************'
                     print 'Received broadcast from:' + addr_des
-                    print 'Own address' + self.addr
+                    print ' '
                     msg=msgHandler.Encode_Info_Msg(self.addr,self.energy,self.coordinate)
-                    IsSent = self.send(addr_des, PORT,msg)
+                    IsSent = self.send(addr_des, PORT, msg)
                     #print 'IsSent; ' + str(IsSent)
                  else:
-                    print 'Error in decoding broadcast message.'   
+                    print 'Error in decoding broadcast message.' 
+                    print ' '  
             elif type_msg==0:
-                print 'error in decode message' + data
+                print 'Error in decode message: ' + data
+                print ' '
         #analyze data
         # connect to the speicified address and port
         # receive message
@@ -191,23 +203,37 @@ class Node():
             if type_msg==1:
                 temp,code=msgHandler.Decode_CH_Change_Msg(data)
                 if code==0:
-                    self.clusterHead=temp
-                    self.RefreshNetwork(temp)
-                    print '******************************'
-                    print 'received CH change message: ' + str(temp)
-                    print 'CH changed to:' + str(self.clusterHead)
+                    if judge:
+                        self.clusterHead=temp
+                        self.RefreshNetwork(temp)
+                        print '******************************'
+                        print 'Received: CH change message: ' + str(temp)
+                    else:
+                        newInfo = [self.addr, self.energy, self.coor]
+                        self.clusterHead = newInfo
+                        self.RefreshNetwork(newInfo)
+                        print '******************************'
+                        print 'Received: CH change message: ' + str(newInfo)
+                        print ' '
+
+                    print 'CH is changed to: '  + str(self.clusterHead)
+                    print ' '
                 else:
-                    print "error in decoding CH change msg."
+                    print "Error in decoding CH change msg."
+                    print ' '
                 s.close()
                 break
             elif type_msg==5:
                  addr_des,code=msgHandler.Decode_Broadcast_msg(data)
                  if code==0:
-                    print '^^^^^^^^^^^^^^^^^'
+                    print '******************************'
                     print 'Received broadcast from:' + addr_des
                     print 'Own address' + self.addr
                     msg=msgHandler.Encode_Info_Msg(self.addr,self.energy,self.coordinate)
                     IsSent = self.send(addr_des, PORT,msg)
+                else:
+                    print 'Error in decoding broadcast message.' 
+                    print ' '  
         return code
 
         
@@ -273,7 +299,9 @@ class Node():
         if self.energy > self.energyCapacity * self.energyThreshold:
             self.codeStatus = 1
         self.energyLock.release()
+        print '---------------------------------'
         print "Recharged Energy: " + str(((300 - valuePhotoresistor)/20)**2) + ". Energy Level: " + str(self.energy)
+        print ' ' 
         time.sleep(1)
     
     
@@ -378,25 +406,31 @@ if __name__ == '__main__':
             duree = time.time() - timerUpdateHead
             # change cluster head
             if (duree > 40):
-                print "Find next clusterhead"
+                print '******************************'
+                print "Begin to find next clusterhead"
                 node.network=[]
                 node.broadcast()
                 time.sleep(2)
                 node.RefreshNetwork([node.addr, node.energy,node.coordinate])
                 print "Broadcast end"
-                print "Before change: " + str(node.clusterHead[0])
-                print node.network
+                print "CH before change: "
+                print str(node.clusterHead[0])
+                #print node.network
                 node.selectNextHead()
                 print "Select end"
-                print "After change: " + str(node.clusterHead[0])
-                print node.network
+                print "CH after change: "
+                print str(node.clusterHead[0])
+                #print node.network
 
                 tempNet = []
                 for tempNode in node.network:
                     if node.calculateCoor(node.clusterHead[2], tempNode[2]):
                         tempNet.append(tempNode)
                 node.network = tempNet
+                print 'Network after change: '
+
                 print node.network
+                print ' '
                 
                 # tell the BS the information of the network
 		
@@ -405,7 +439,7 @@ if __name__ == '__main__':
                 for eachNode in node.network:
 
                     code=node.send(eachNode[0], PORT, MS_Handler.Encode_CH_Change_Msg(node.clusterHead[0],node.clusterHead[1],node.clusterHead[2]))
-                    print '++++++++++++++++'
+                    #print '++++++++++++++++'
                     #print code
                 #timerUpdateHead=
                 CH_start=0
