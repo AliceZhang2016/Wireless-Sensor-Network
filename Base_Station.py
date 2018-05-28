@@ -48,7 +48,9 @@ class Base_Station():
         addr = (addr_des, port_des)
         try:
             s.sendto(msg, addr)
-            print 'sent:' + msg
+            print ' '
+            print 'sent: ' + msg + ' to ' + addr_des
+            print ' '
         except:
             code=1
         finally:
@@ -109,11 +111,13 @@ class Base_Station():
 		        temp,code=msgHandler.Decode_List_Info_Msg(data)
 		        if code==0:
 		            self.network=temp
-			    self.clusterHead=temp[0]
-                            lastSend=time.time()
-		            print 'received network: ' + str(self.network)
+			        self.clusterHead=temp[0]
+                    lastSend=time.time()
+		            print 'Received network info: '
+                    print str(self.network)
+                    print ' '
 		        else:
-		            print "error in decoding list of info msg"
+		            print "Error in decoding list of info msg"
 		    elif type_msg==3:
 		        temp,code=msgHandler.Decode_Info_Msg(data)
 		        if code==0 and self.HasInit==False:
@@ -121,12 +125,13 @@ class Base_Station():
 		            print '******************************'
 		            #print 'received: '
 		            #print temp
-		            print 'Current Network: ' + str(self.network)
+		            print 'Current Network: '
+                    print str(self.network)
 		            number_node_activated+=1
-		            print 'number_node_activated: '+str(number_node_activated)
+		            print 'Number of node activated: '+str(number_node_activated)
 		            if number_node_activated>=2:
 		                self.InitCH()
-		                msg=msgHandler.Encode_CH_Change_Msg(	self.clusterHead[0],self.clusterHead[1],self.clusterHead[2])
+		                msg=msgHandler.Encode_CH_Change_Msg(self.clusterHead[0],self.clusterHead[1],self.clusterHead[2])
 		                for eachNode in self.network:
 		                    code=self.send(eachNode[0], PORT, msg)
 		                number_node_activated=0
@@ -134,22 +139,22 @@ class Base_Station():
 		                self.HasInit=True
 			if code==0 and self.HasInit==True:
                                 lastSend=time.time()
-                                print 'Reset lastSend time: '  +str (lastSend)
+                                print 'Reset last connect time: '  + str (lastSend)
 		        if code==1:
 		            print 'Error in decoding info msg'
 		    elif type_msg==4:
 		        temp,code=msgHandler.Decode_Sensor_Data(data)
-                        print 'time since last receive sensor data: '+ str(time.time()-lastSend)
+                        
 		        if code==0:
-                            print 'time since last receive sensor data: '+ str(time.time()-lastSend)
+                            print 'Time since last connection: '+ str(time.time()-lastSend)
 		            lastSend=time.time()
-                            print 'Reset lastSend time: '  +str (lastSend)
+                            print 'Reset last connection time: '  +str (lastSend)
 		        else:
 		            print 'Error in decoding sensor data' 
 		    elif type_msg==5:
 		        pass
 		    elif type_msg==0:
-		        print 'error in decode message' + data
+		        print 'Error in decode message' + data
 		except:
 			pass
         #analyze data
@@ -170,9 +175,10 @@ class Base_Station():
 
 
     def Change_to_spare_CH(self):
-        print 'change to spare CH'
-        print 'before remove lost node: ' + str(self.network)
-        print str(self.clusterHead)
+        print 'Change to spare CH:'
+        print 'Network before remove lost cluster head: '
+        print str(self.network)
+        #print str(self.clusterHead)
         code=0
 	if 1==1:
 	    if self.network[0][0]==self.clusterHead[0]:
@@ -180,8 +186,11 @@ class Base_Station():
             else:
                 self.network.pop(1)
 	    # network.pop(remove_index)
-	    print 'after remove lost node: ' + str(self.network)             
+	    print 'Network after remove lost node: '
+        print str(self.network)   
+        print 'New CH: '          
 	    self.clusterHead=self.network[0]
+        print ' '
         '''try:
 
         except:
@@ -192,7 +201,7 @@ class Base_Station():
 
     def RefreshNetwork(self,info):
         code=0
-        print '------------------------'
+        print '----------------------------'
         print(info)
         address=info[0]
         energy_level=info[1]
