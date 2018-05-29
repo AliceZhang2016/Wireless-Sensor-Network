@@ -203,6 +203,7 @@ class Node():
             if type_msg==1:
                 temp,code=msgHandler.Decode_CH_Change_Msg(data)
                 if code==0:
+		    judge = self.calculateCoor(temp[2], self.coordinate)
                     if judge:
                         self.clusterHead=temp
                         self.RefreshNetwork(temp)
