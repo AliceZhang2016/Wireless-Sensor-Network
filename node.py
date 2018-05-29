@@ -77,7 +77,7 @@ class Node():
             s.sendto(msg, addr)
             print ' '
             print 'sent: ' + msg + ' to ' + addr_des
-            print ' '
+            print '\n'
         except:
             code=1
         finally:
